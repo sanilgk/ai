@@ -3,7 +3,7 @@
 
 Created an Spring boot web application for doing FAQ with AI support. This can be used in many range of areas.
 From Travel advicer, financial advicer, Planning advicer ..etc
-A demonstration project showcasing Retrieval Augmented Generation (RAG) implementation using Spring AI and Gemini's GPT models. 
+It is a demonstration project showcasing Retrieval Augmented Generation (RAG) implementation using Spring AI and Gemini's GPT models. 
 This application enables intelligent document querying by combining the power of Large Language Models (LLMs) with local document context.
 
 **Overview**
