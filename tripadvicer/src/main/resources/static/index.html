@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQ Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e28;
+    --border: rgba(255,255,255,0.07);
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --user-bubble: #1e3a5f;
+    --bot-bubble: #161a24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── Background SVG graphic ── */
+  .bg-graphic {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .bg-graphic svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,15,20,0.7);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  header span {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 300;
+    margin-left: 4px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    margin-left: auto;
+    box-shadow: 0 0 8px #22c55e88;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── Chat window ── */
+  #chat-window {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    z-index: 10;
+    scroll-behavior: smooth;
+  }
+
+  #chat-window::-webkit-scrollbar { width: 4px; }
+  #chat-window::-webkit-scrollbar-track { background: transparent; }
+  #chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── Messages ── */
+  .msg {
+    display: flex;
+    gap: 12px;
+    max-width: 720px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .msg.bot .avatar {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+  }
+
+  .msg.user .avatar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .bubble {
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    max-width: calc(100% - 44px);
+  }
+
+  .msg.bot .bubble {
+    background: var(--bot-bubble);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+  }
+
+  .msg.user .bubble {
+    background: var(--user-bubble);
+    border: 1px solid rgba(79,142,247,0.2);
+    border-top-right-radius: 4px;
+    color: #c5d8ff;
+  }
+
+  /* ── Typing indicator ── */
+  .typing-indicator {
+    display: flex; gap: 4px; align-items: center; padding: 4px 0;
+  }
+  .typing-indicator span {
+    width: 6px; height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-6px); }
+  }
+
+  /* ── Quick suggestions ── */
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 24px 12px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .suggestion-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .suggestion-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(79,142,247,0.08);
+  }
+
+  /* ── Input area ── */
+  .input-area {
+    position: relative;
+    z-index: 10;
+    padding: 16px 24px 24px;
+    background: rgba(13,15,20,0.8);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+  }
+
+  .input-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px 16px;
+    transition: border-color 0.2s;
+  }
+
+  .input-wrapper:focus-within {
+    border-color: rgba(79,142,247,0.4);
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.06);
+  }
+
+  #user-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 0.9rem;
+    resize: none;
+    max-height: 140px;
+    min-height: 24px;
+    line-height: 1.6;
+  }
+
+  #user-input::placeholder { color: var(--text-muted); }
+
+  #send-btn {
+    width: 36px; height: 36px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  #send-btn:hover { opacity: 0.85; transform: scale(1.05); }
+  #send-btn:active { transform: scale(0.95); }
+
+  #send-btn svg { width: 16px; height: 16px; fill: white; }
+
+  .input-hint {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Ripple on send button ── */
+  #send-btn {
+    overflow: hidden;
+  }
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    transform: scale(0);
+    animation: rippleAnim 0.5s linear;
+    pointer-events: none;
+  }
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* ── Send button flash ── */
+  @keyframes btnFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(79,142,247,0.7); }
+    70%  { box-shadow: 0 0 0 10px rgba(79,142,247,0); }
+    100% { box-shadow: 0 0 0 0 rgba(79,142,247,0); }
+  }
+  .btn-flash { animation: btnFlash 0.45s ease-out; }
+
+  /* ── Result card inside bubble ── */
+  .result-card {
+    margin-top: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(79,142,247,0.18);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+  .result-card .card-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(79,142,247,0.15);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 2px 7px;
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ── Copy button ── */
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: #22c55e; color: #22c55e; }
+
+  /* ── Typewriter cursor ── */
+  .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--accent);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 0.7s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── Feedback toast ── */
+  #toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 100;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Transparent Background Graphic ── -->
+<div class="bg-graphic">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="g1" cx="20%" cy="30%" r="50%">
+        <stop offset="0%" stop-color="#4f8ef7" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#4f8ef7" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="g2" cx="80%" cy="70%" r="50%">
+        <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.1"/>
+        <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="g3" cx="60%" cy="10%" r="40%">
+        <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.07"/>
+        <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Glow blobs -->
+    <ellipse cx="300" cy="250" rx="400" ry="320" fill="url(#g1)"/>
+    <ellipse cx="1150" cy="650" rx="380" ry="300" fill="url(#g2)"/>
+    <ellipse cx="850" cy="80" rx="320" ry="220" fill="url(#g3)"/>
+
+    <!-- Grid lines -->
+    <g stroke="rgba(255,255,255,0.03)" stroke-width="1">
+      <line x1="0" y1="150" x2="1440" y2="150"/>
+      <line x1="0" y1="300" x2="1440" y2="300"/>
+      <line x1="0" y1="450" x2="1440" y2="450"/>
+      <line x1="0" y1="600" x2="1440" y2="600"/>
+      <line x1="0" y1="750" x2="1440" y2="750"/>
+      <line x1="180" y1="0" x2="180" y2="900"/>
+      <line x1="360" y1="0" x2="360" y2="900"/>
+      <line x1="540" y1="0" x2="540" y2="900"/>
+      <line x1="720" y1="0" x2="720" y2="900"/>
+      <line x1="900" y1="0" x2="900" y2="900"/>
+      <line x1="1080" y1="0" x2="1080" y2="900"/>
+      <line x1="1260" y1="0" x2="1260" y2="900"/>
+    </g>
+
+    <!-- Floating geometric shapes -->
+    <circle cx="120" cy="120" r="3" fill="rgba(79,142,247,0.4)"/>
+    <circle cx="480" cy="80" r="2" fill="rgba(167,139,250,0.4)"/>
+    <circle cx="900" cy="200" r="3" fill="rgba(79,142,247,0.3)"/>
+    <circle cx="1300" cy="100" r="2" fill="rgba(34,211,238,0.4)"/>
+    <circle cx="1380" cy="400" r="3" fill="rgba(167,139,250,0.3)"/>
+    <circle cx="60" cy="600" r="2" fill="rgba(79,142,247,0.3)"/>
+    <circle cx="700" cy="800" r="3" fill="rgba(34,211,238,0.3)"/>
+
+    <!-- Hexagons -->
+    <polygon points="200,350 215,341 215,323 200,314 185,323 185,341" fill="none" stroke="rgba(79,142,247,0.15)" stroke-width="1"/>
+    <polygon points="1100,200 1118,190 1118,168 1100,158 1082,168 1082,190" fill="none" stroke="rgba(167,139,250,0.15)" stroke-width="1"/>
+    <polygon points="650,700 664,692 664,675 650,667 636,675 636,692" fill="none" stroke="rgba(34,211,238,0.12)" stroke-width="1"/>
+
+    <!-- Corner accent lines -->
+    <path d="M0,0 L80,0 L80,4 L4,4 L4,80 L0,80 Z" fill="rgba(79,142,247,0.1)"/>
+    <path d="M1440,900 L1360,900 L1360,896 L1436,896 L1436,820 L1440,820 Z" fill="rgba(167,139,250,0.1)"/>
+  </svg>
+</div>
+
+<!-- ── Toast notification ── -->
+<div id="toast">✅ Copied to clipboard!</div>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo-icon">💬</div>
+  <div>
+    <h1>FAQ Assistant <span>by YourBrand</span></h1>
+  </div>
+  <div class="status-dot"></div>
+</header>
+
+<!-- ── Chat window ── -->
+<div id="chat-window">
+  <div class="msg bot">
+    <div class="avatar">🤖</div>
+    <div class="bubble">
+      Hello! 👋 I'm your FAQ assistant. Ask me anything — I'm here to help with common questions about our products, services, policies, and more.<br><br>
+      You can also tap one of the suggestions below to get started quickly.
+    </div>
+  </div>
+</div>
+
+<!-- ── Quick suggestions ── -->
+<div class="suggestions" id="suggestions">
+  <button class="suggestion-btn" onclick="sendSuggestion(this)">What are your business hours?</button>
+  <button class="suggestion-btn" onclick="sendSuggestion(this)">How do I reset my password?</button>
+  <button class="suggestion-btn" onclick="sendSuggestion(this)">What's your refund policy?</button>
+  <button class="suggestion-btn" onclick="sendSuggestion(this)">How can I contact support?</button>
+</div>
+
+<!-- ── Input area ── -->
+<div class="input-area">
+  <div class="input-wrapper">
+    <textarea id="user-input" placeholder="Ask a question…" rows="1"></textarea>
+    <button id="send-btn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
+      </svg>
+    </button>
+  </div>
+  <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+</div>
+
+<script src="index.js"></script>
+</body>
+</html>
