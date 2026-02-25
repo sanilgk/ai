@@ -1,9 +1,13 @@
-Spring AI RAG Demo with Gemini
+**Spring AI RAG Demo with Gemini** 
+
+
 Created an Spring boot web application for doing FAQ with AI support.
 A demonstration project showcasing Retrieval Augmented Generation (RAG) implementation using Spring AI and Gemini's GPT models. 
 This application enables intelligent document querying by combining the power of Large Language Models (LLMs) with local document context.
 
-Overview
+**Overview**
+
+
 This project demonstrates how to:
 
 Inject PDF documents into a vector database
@@ -12,7 +16,9 @@ Augment LLM responses with relevant document context
 Create an API endpoint for document-aware chat interactions
 
 
-🛠️ Technologies Used:
+**🛠️ Technologies Used:**
+
+
 • Java 25
 • Spring Boot 3.5.12-SNAPSHOT
 • Spring AI
@@ -20,7 +26,9 @@ Create an API endpoint for document-aware chat interactions
 • Docker
 • Gemini API
 
-📌 Key Concepts:
+**📌 Key Concepts:**
+
+
 • RAG (Retrieval Augmented Generation)
 • Vector Databases
 • Document Processing
